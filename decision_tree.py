@@ -43,18 +43,20 @@ def isHomogeneous(arr):
     else:
         raise ValueError("Attempting to calculate homogeneity of a non-leaf node")
 
-def selectAttribute(arr):
+def selectAttribute(arr, verbose=False):
     """If arr is not homogeneous, returns index of attribute with greatest information gain"""
+    current_entropy = entropy(arr)
     entropy_arr = []
     for index in xrange(len(arr[0])-1):
         sum_entropy = sum([entropy(leaf)*len(leaf)/len(arr) for leaf in split(arr, index).values()])
         entropy_arr.append((index, sum_entropy))
+        if verbose: print("Information gain for attribute "+str(index)+": "+str(current_entropy-sum_entropy))
     best_att = min(entropy_arr, key=lambda x:x[1])
-    return best_att[0] if best_att[1] < entropy(arr) else None  # check to see if no information remains
+    return best_att[0] if best_att[1] < current_entropy else None  # check to see if no information remains
 
 def decision_tree(tree, verbose=False):
     """Recursively perform splits to form decision tree"""
-    selected_attribute = selectAttribute(tree)
+    selected_attribute = selectAttribute(tree, verbose=verbose)
     if isHomogeneous(tree) or selected_attribute is None:  # if should not be split any further
         labels = {}
         for elmnt in tree:
@@ -63,11 +65,11 @@ def decision_tree(tree, verbose=False):
             else:
                 labels[elmnt[-1]] += 1
         label = max([(label,labels[label]) for label in labels], key=lambda x:x[1])[0]
-        if verbose: print "\n\033[0mCurrent node is: "+str(tree)+"\n\033[94mNot splitting, label: "+label+"\033[0m"
+        if verbose: print "\033[0mCurrent node is: "+str(tree)+"\n\033[94mNot splitting, label: "+label+"\033[0m\n"
         return label
     else:
         best_att = selected_attribute
-        if verbose: print "\n\033[0mCurrent node is: "+str(tree)+"\n\033[92mSplitting on: \033[0m"+str(best_att)
+        if verbose: print "\033[0mCurrent node is: "+str(tree)+"\n\033[92mSplitting on: \033[0m"+str(best_att)+"\n"
         node = {}
         children = split(tree, best_att)
         for child in children:
@@ -83,6 +85,6 @@ def classify(event, tree):
 
 if __name__=="__main__":
     examples = load_csv()
-    tree = decision_tree(examples)
+    tree = decision_tree(examples, verbose=True)
     classify(('F', 'O'), tree)
     
